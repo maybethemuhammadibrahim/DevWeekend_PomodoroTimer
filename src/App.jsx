@@ -530,7 +530,7 @@ export default function PomodoroTimer() {
 
                 {/* Timer Display - Scaled up significantly */}
                 <div className="py-6">
-                  <div className="text-8xl sm:text-[10rem] tracking-wider font-extrabold timer-digit drop-shadow-[4px_4px_0px_rgba(0,0,0,0.15)]">
+                  <div className="text-[10rem] sm:text-[10rem] tracking-wider font-extrabold timer-digit drop-shadow-[4px_4px_0px_rgba(0,0,0,0.15)] leading-none">
                     {formatTime(timeLeft)}
                   </div>
                 </div>
