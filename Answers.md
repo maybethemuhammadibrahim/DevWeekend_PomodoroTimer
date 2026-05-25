@@ -1,4 +1,4 @@
-1.How to Run
+1. # How to Run
 
 ```
 git clone 
