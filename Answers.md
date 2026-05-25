@@ -1,16 +1,17 @@
-1.How to Run
+# 1.How to Run
 
+```
 git clone 
 cd DevWeekend_PomodoroTimer
 npm install
 npm run dev
 npm run build
-
+```
 
 Deployed Website:
 https://dev-weekend-pomodoro-timer.vercel.app/
 
-2. Stack & Design Choices
+# 2. Stack & Design Choices
 
 Tech Stack: React + Vite.
 
@@ -24,7 +25,7 @@ Two Specific Decisions
 2. I choose to use big bulky buttons so that the design feels intuitive on especially on mobile.
 
 
-3. Responsive Behavior & Accessibility
+# 3. Responsive Behavior & Accessibility
 
 Responsive Behavior:
 
@@ -40,7 +41,7 @@ Keyboard Navigation: all buttons and interactive elements are focusable (tabbabl
 
 Screen Reader Text: Added ARIA labels and descriptive text so screen readers can interpret the current state.
 
-4. AI Usage in Development
+# 4. AI Usage in Development
 
 The Initial design was generated using v0 by Vercel. The design pattern was something like this
 1. I used websites like dribble and behance to take inspiration
@@ -49,7 +50,7 @@ The Initial design was generated using v0 by Vercel. The design pattern was some
 4. Gemini 3 Pro inside of Antigravity was used to implement the cuckoo feature
 
 
-5. Honest Assessment of Gaps
+# 5. Honest Assessment of Gaps
 
 Minor UI Polish: While the "windows" have retro borders, I could further refine the "shrink" animation on hover to make the retro-tech effect stronger.
 
