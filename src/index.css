@@ -32,6 +32,8 @@
   --y2k-lavender: #e8d5f0;
   --y2k-cream: #faf8f5;
   --y2k-grid: #e0e0d8;
+  --y2k-ink: #000000;
+  --y2k-white: #ffffff;
 
   --radius: 0px;
 
@@ -77,6 +79,8 @@
   --color-y2k-lavender: var(--y2k-lavender);
   --color-y2k-cream: var(--y2k-cream);
   --color-y2k-grid: var(--y2k-grid);
+  --color-y2k-ink: var(--y2k-ink);
+  --color-y2k-white: var(--y2k-white);
 }
 
 @layer base {
@@ -400,4 +404,40 @@
 
 .confetti-5 {
   animation: confetti-fall-2 2.1s linear both;
+}
+
+.history-item {
+  border: 2px solid var(--y2k-ink);
+  background: var(--y2k-white);
+  padding: 8px 10px;
+  border-radius: 4px;
+  box-shadow: 3px 3px 0 0 var(--y2k-ink);
+}
+
+.history-badge {
+  width: 28px;
+  height: 28px;
+  background: var(--y2k-pink);
+  border: 2px solid var(--y2k-ink);
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  font-family: "VT323", monospace;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.history-label {
+  font-family: "VT323", monospace;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.history-time {
+  font-family: monospace;
+  font-size: 12px;
+  opacity: 0.75;
+  white-space: nowrap;
 }

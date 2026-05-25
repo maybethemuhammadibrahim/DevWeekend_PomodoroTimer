@@ -629,19 +629,23 @@ export default function PomodoroTimer() {
 
             {/* History Panel */}
             <RetroWindow title="HISTORY" color="blue" className="flex-grow min-h-[200px]" contentClassName="p-6 flex flex-col">
-              <div className="flex justify-between items-center border-b-4 border-black pb-4 mb-4">
-                <span className="text-xl font-bold uppercase tracking-wider text-[var(--y2k-pink)] drop-shadow-[1px_1px_0px_rgba(0,0,0,1)]">
-                  TOTAL FOCUS:
-                </span>
-                <span className="text-2xl font-extrabold tracking-widest text-[#90ee90] drop-shadow-[1px_1px_0px_rgba(0,0,0,1)]">
-                  {totalFocusStr}
-                </span>
+              <div className="flex justify-between items-center bg-[var(--y2k-cream)] border-4 border-black rounded-2xl px-4 py-3 mb-6 shadow-[4px_4px_0_0_rgba(0,0,0,1)]">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg sm:text-xl font-black uppercase tracking-widest text-black">
+                    Total Focus
+                  </span>
+                </div>
+                <div className="bg-[#90ee90] border-2 border-black rounded-lg px-3 py-1 shadow-[2px_2px_0_0_rgba(0,0,0,1)]">
+                  <span className="text-xl sm:text-2xl font-black tracking-wider text-black">
+                    {totalFocusStr}
+                  </span>
+                </div>
               </div>
-              <div className="space-y-4 max-h-[180px] overflow-y-auto pr-2 flex-grow">
+              <ul className="space-y-4 max-h-[180px] overflow-y-auto pr-2 flex-grow">
                 {sessions.length === 0 ? (
-                  <div className="text-center text-gray-500 font-bold text-lg pt-4">
+                  <li className="list-none text-center text-gray-500 font-bold text-lg pt-4">
                     No sessions yet!
-                  </div>
+                  </li>
                 ) : (
                   sessions.map((session, index) => {
                     const mins = Math.floor(session.duration / 60);
@@ -649,15 +653,16 @@ export default function PomodoroTimer() {
                     const durationStr = `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
 
                     return (
-                      <div key={index} className="flex justify-between items-center border-b-4 border-black pb-3 text-lg sm:text-xl font-bold">
-                        <span>[{durationStr} focus — {formatCompletionTime(session.completedAt)}]</span>
-                        <span className="text-[#90ee90] text-2xl drop-shadow-[1px_1px_0px_rgba(0,0,0,1)]">✓</span>
-                      </div>
+                      <li key={index} className="history-item flex items-center gap-3">
+                        <span aria-hidden="true" className="history-badge">✓</span>
+                        <span className="history-label">{durationStr} focus</span>
+                        <span className="history-time ml-auto">{formatCompletionTime(session.completedAt)}</span>
+                      </li>
                     );
                   })
                 )}
 
-              </div>
+              </ul>
             </RetroWindow>
           </div>
 
