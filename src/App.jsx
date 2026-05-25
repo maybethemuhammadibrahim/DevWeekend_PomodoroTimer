@@ -72,6 +72,7 @@ function RetroWindow({
   children,
   color = "white",
   className = "",
+  contentClassName = "p-4",
 }) {
   const bgColors = {
     white: "bg-white",
@@ -82,13 +83,13 @@ function RetroWindow({
   };
 
   return (
-    <div className={`y2k-window ${bgColors[color] || bgColors.white} ${className}`}>
-      <div className="flex items-center justify-between px-3 py-2 border-b-2 border-black bg-[var(--y2k-cream)]">
+    <div className={`y2k-window flex flex-col ${bgColors[color] || bgColors.white} ${className}`}>
+      <div className="flex items-center justify-between px-3 py-2 border-b-2 border-black bg-[var(--y2k-cream)] shrink-0 z-10">
         <WindowControls />
         <span className="text-sm tracking-wider uppercase">{title}</span>
         <div className="w-12" />
       </div>
-      <div className="p-4">{children}</div>
+      <div className={`flex-grow flex flex-col ${contentClassName}`}>{children}</div>
     </div>
   );
 }
@@ -478,7 +479,8 @@ export default function PomodoroTimer() {
             <RetroWindow
               title={modeLabel}
               color={windowColor}
-              className={`flex-grow p-6 sm:p-8 ${showCelebration ? "celebrate" : ""}`}
+              className={`flex-grow ${showCelebration ? "celebrate" : ""}`}
+              contentClassName="p-6 sm:p-8"
             >
               <div className="text-center space-y-8 flex flex-col h-full justify-center">
                 {/* Status Indicator */}
@@ -543,7 +545,7 @@ export default function PomodoroTimer() {
           <div className="w-full lg:w-1/2 flex flex-col space-y-8">
             
             {/* Settings Panel */}
-            <RetroWindow title="SETTINGS" color="pink" className="p-6">
+            <RetroWindow title="SETTINGS" color="pink" contentClassName="p-6">
               {!showSettings ? (
                 <div className="flex items-center justify-between">
                   <div className="text-xl sm:text-2xl font-bold space-y-2">
@@ -588,7 +590,7 @@ export default function PomodoroTimer() {
             </RetroWindow>
 
             {/* History Panel */}
-            <RetroWindow title="HISTORY" color="blue" className="flex-grow p-6">
+            <RetroWindow title="HISTORY" color="blue" className="flex-grow" contentClassName="p-6">
               <div className="space-y-4">
                  {/* Example completed UI for history items */}
                  <div className="flex justify-between items-center border-b-4 border-black pb-3 text-xl font-bold">
