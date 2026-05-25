@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 
 const STORAGE_KEY = "pomodoro-history";
+const TIMER_STATE_KEY = "pomodoro-timer-state";
 
 function getTodayKey() {
   return new Date().toDateString();
@@ -26,6 +27,33 @@ function saveSessions(sessions) {
   localStorage.setItem(
     STORAGE_KEY,
     JSON.stringify({ date: getTodayKey(), sessions })
+  );
+}
+
+function loadTimerState() {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    const stored = localStorage.getItem(TIMER_STATE_KEY);
+    if (!stored) return null;
+
+    const data = JSON.parse(stored);
+    if (data.date !== getTodayKey()) return null;
+
+    return data.state || null;
+  } catch {
+    return null;
+  }
+}
+
+function saveTimerState(state) {
+  if (typeof window === "undefined") return;
+
+  localStorage.setItem(
+    TIMER_STATE_KEY,
+    JSON.stringify({ date: getTodayKey(), state })
   );
 }
 
@@ -90,6 +118,65 @@ function RetroWindow({
         <div className="w-12" />
       </div>
       <div className={`flex-grow flex flex-col ${contentClassName}`}>{children}</div>
+    </div>
+  );
+}
+
+function ConfettiPiece({ className = "" }) {
+  return <span className={`absolute rounded-sm ${className}`} />;
+}
+
+function SessionDoneOverlay() {
+  const confettiPieces = [
+    "left-[8%] top-[12%] w-3 h-8 bg-[var(--y2k-pink)] rotate-[-18deg]",
+    "left-[16%] top-[26%] w-2 h-6 bg-[var(--y2k-yellow)] rotate-[25deg]",
+    "left-[26%] top-[10%] w-3 h-7 bg-[var(--y2k-blue)] rotate-[10deg]",
+    "right-[18%] top-[16%] w-3 h-8 bg-[var(--y2k-lavender)] rotate-[20deg]",
+    "right-[10%] top-[32%] w-2 h-6 bg-[#ff8fb1] rotate-[-22deg]",
+    "left-[12%] bottom-[18%] w-3 h-7 bg-[#90ee90] rotate-[18deg]",
+    "left-[30%] bottom-[8%] w-2 h-6 bg-[var(--y2k-yellow)] rotate-[-14deg]",
+    "right-[28%] bottom-[14%] w-3 h-8 bg-[var(--y2k-pink)] rotate-[30deg]",
+    "right-[42%] top-[8%] w-2 h-6 bg-[#90ee90] rotate-[-8deg]",
+    "left-[48%] top-[14%] w-3 h-7 bg-[var(--y2k-blue)] rotate-[16deg]",
+  ];
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none px-4">
+      <div className="absolute inset-0 bg-black/20 backdrop-blur-[2px] overlay-fade" />
+      <div className="absolute inset-0 overflow-hidden">
+        {confettiPieces.map((className, index) => (
+          <ConfettiPiece key={index} className={`confetti-piece confetti-${(index % 5) + 1} ${className}`} />
+        ))}
+      </div>
+      <div className="session-card relative pointer-events-auto w-full max-w-xl border-4 border-black bg-[var(--y2k-cream)] y2k-shadow-lg overflow-hidden">
+        <div className="flex items-center justify-between border-b-4 border-black bg-[var(--y2k-pink)] px-4 py-2">
+          <span className="text-lg sm:text-xl font-bold tracking-[0.3em] uppercase">SESSION DONE</span>
+          <span className="text-sm font-bold tracking-widest">01</span>
+        </div>
+        <div className="p-5 sm:p-7">
+          <div className="flex flex-col sm:flex-row items-center gap-6">
+            <div className="cuckoo-shell relative w-28 h-28 shrink-0">
+              <div className="cuckoo-bird absolute inset-0 mx-auto my-auto w-20 h-16">
+                <div className="bird-body" />
+                <div className="bird-wing" />
+                <div className="bird-head" />
+                <div className="bird-beak" />
+                <div className="bird-eye" />
+                <div className="bird-tail" />
+              </div>
+              <div className="cuckoo-clock absolute left-1/2 -translate-x-1/2 bottom-[-12px] w-24 h-10 border-4 border-black bg-[var(--y2k-yellow)] rounded-full shadow-[3px_3px_0_0_rgba(0,0,0,1)]" />
+            </div>
+            <div className="text-center sm:text-left space-y-2">
+              <div className="text-4xl sm:text-5xl font-extrabold tracking-widest">CUCKOO!</div>
+              <p className="text-xl sm:text-2xl font-bold leading-tight">
+                Focus session complete.
+                <br />
+                Take a break and let the confetti fall.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -164,100 +251,105 @@ function useAudio() {
   }, []);
 
   const playClickSound = useCallback(() => {
-  try {
-    if (!audioContextRef.current) {
-      audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
-    }
-    const ctx = audioContextRef.current;
-    const now = ctx.currentTime;
+    try {
+      if (!audioContextRef.current) {
+        audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      const ctx = audioContextRef.current;
+      const now = ctx.currentTime;
 
-    // Body: short noise burst for the "thock"
-    const bufferSize = ctx.sampleRate * 0.04;
-    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-    const data = buffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1);
+      // Body: short noise burst for the "thock"
+      const bufferSize = ctx.sampleRate * 0.04;
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1);
 
-    const noise = ctx.createBufferSource();
-    noise.buffer = buffer;
+      const noise = ctx.createBufferSource();
+      noise.buffer = buffer;
 
-    // Low-pass filter to make it sound woody/dampened, not hissy
-    const filter = ctx.createBiquadFilter();
-    filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(1800, now);
-    filter.frequency.exponentialRampToValueAtTime(400, now + 0.04);
+      // Low-pass filter to make it sound woody/dampened, not hissy
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(1800, now);
+      filter.frequency.exponentialRampToValueAtTime(400, now + 0.04);
 
-    const gain = ctx.createGain();
-    gain.gain.setValueAtTime(0.9, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.9, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
 
-    noise.connect(filter);
-    filter.connect(gain);
-    gain.connect(ctx.destination);
-    noise.start(now);
-    noise.stop(now + 0.06);
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+      noise.start(now);
+      noise.stop(now + 0.06);
 
-    // Sub-click: very short low tone for the tactile "click" layer
-    const osc = ctx.createOscillator();
-    const oscGain = ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(180, now);
-    osc.frequency.exponentialRampToValueAtTime(60, now + 0.03);
-    oscGain.gain.setValueAtTime(0.4, now);
-    oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
-    osc.connect(oscGain);
-    oscGain.connect(ctx.destination);
-    osc.start(now);
-    osc.stop(now + 0.03);
+      // Sub-click: very short low tone for the tactile "click" layer
+      const osc = ctx.createOscillator();
+      const oscGain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(180, now);
+      osc.frequency.exponentialRampToValueAtTime(60, now + 0.03);
+      oscGain.gain.setValueAtTime(0.4, now);
+      oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
+      osc.connect(oscGain);
+      oscGain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.03);
 
-  } catch (e) { console.log("Audio playback failed:", e); }
-}, []);
+    } catch (e) { console.log("Audio playback failed:", e); }
+  }, []);
 
   const playHoverSound = useCallback(() => {
-  try {
-    if (!audioContextRef.current) {
-      audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
-    }
-    const ctx = audioContextRef.current;
-    const now = ctx.currentTime;
+    try {
+      if (!audioContextRef.current) {
+        audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      const ctx = audioContextRef.current;
+      const now = ctx.currentTime;
 
-    const bufferSize = ctx.sampleRate * 0.025;
-    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-    const data = buffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1);
+      const bufferSize = ctx.sampleRate * 0.025;
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1);
 
-    const noise = ctx.createBufferSource();
-    noise.buffer = buffer;
+      const noise = ctx.createBufferSource();
+      noise.buffer = buffer;
 
-    const filter = ctx.createBiquadFilter();
-    filter.type = 'bandpass';
-    filter.frequency.value = 3000;
-    filter.Q.value = 1.5;
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.value = 3000;
+      filter.Q.value = 1.5;
 
-    const gain = ctx.createGain();
-    gain.gain.setValueAtTime(0.07, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.025);
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.07, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.025);
 
-    noise.connect(filter);
-    filter.connect(gain);
-    gain.connect(ctx.destination);
-    noise.start(now);
-    noise.stop(now + 0.025);
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+      noise.start(now);
+      noise.stop(now + 0.025);
 
-  } catch (e) { console.log("Audio playback failed:", e); }
-}, []);
+    } catch (e) { console.log("Audio playback failed:", e); }
+  }, []);
 
   return { playSound, playCalmSound, playClickSound, playHoverSound };
 }
 
 export default function PomodoroTimer() {
+  const savedTimerState = loadTimerState();
+  const celebrationTimeoutRef = useRef(null);
+
   // Timer settings (in seconds)
-  const [focusDuration, setFocusDuration] = useState(25 * 60);
-  const [breakDuration, setBreakDuration] = useState(5 * 60);
+  const [focusDuration, setFocusDuration] = useState(savedTimerState?.focusDuration ?? 25 * 60);
+  const [breakDuration, setBreakDuration] = useState(savedTimerState?.breakDuration ?? 5 * 60);
 
   // Timer state
-  const [timeLeft, setTimeLeft] = useState(focusDuration);
-  const [isRunning, setIsRunning] = useState(false);
-  const [mode, setMode] = useState("focus");
+  const [mode, setMode] = useState(savedTimerState?.mode ?? "focus");
+  const [timeLeft, setTimeLeft] = useState(
+    savedTimerState?.timeLeft ?? (savedTimerState?.mode === "break" ? savedTimerState?.breakDuration ?? 5 * 60 : savedTimerState?.focusDuration ?? 25 * 60)
+  );
+  const [isRunning, setIsRunning] = useState(savedTimerState?.isRunning ?? false);
   const [sessions, setSessions] = useState([]);
   const [showCelebration, setShowCelebration] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -273,6 +365,24 @@ export default function PomodoroTimer() {
     setSessions(loadTodaySessions());
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (celebrationTimeoutRef.current) {
+        clearTimeout(celebrationTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    saveTimerState({
+      focusDuration,
+      breakDuration,
+      timeLeft,
+      isRunning,
+      mode,
+    });
+  }, [focusDuration, breakDuration, timeLeft, isRunning, mode]);
+
   // Timer countdown logic
   useEffect(() => {
     if (!isRunning) return;
@@ -282,10 +392,14 @@ export default function PomodoroTimer() {
         if (prev <= 1) {
           // Timer completed
           playSound();
-          setShowCelebration(true);
-          setTimeout(() => setShowCelebration(false), 500);
 
           if (mode === "focus") {
+            setShowCelebration(true);
+            if (celebrationTimeoutRef.current) {
+              clearTimeout(celebrationTimeoutRef.current);
+            }
+            celebrationTimeoutRef.current = setTimeout(() => setShowCelebration(false), 2600);
+
             // Save completed focus session
             const newSession = {
               duration: focusDuration,
@@ -312,12 +426,12 @@ export default function PomodoroTimer() {
     return () => clearInterval(interval);
   }, [isRunning, mode, focusDuration, breakDuration, sessions, playSound]);
 
-  // Update timeLeft when settings change (only when timer is stopped)
+  // Keep a paused countdown stable when settings change; only snap back when the timer is at the start.
   useEffect(() => {
-    if (!isRunning) {
+    if (!isRunning && timeLeft === (mode === "focus" ? focusDuration : breakDuration)) {
       setTimeLeft(mode === "focus" ? focusDuration : breakDuration);
     }
-  }, [focusDuration, breakDuration, mode, isRunning]);
+  }, [focusDuration, breakDuration, mode, isRunning, timeLeft]);
 
   const handleStartPause = () => {
     playClickSound();
@@ -378,22 +492,10 @@ export default function PomodoroTimer() {
   const totalFocusStr = totalHours > 0 ? `${totalHours}h ${totalMins}m` : `${totalMins}m`;
 
   return (
-    
-
     <main className="min-h-screen graph-paper flex flex-col items-center justify-center p-4 sm:p-12">
-      {/* Decorative Sparkles */}
-      <div className="fixed top-8 left-8 text-[var(--y2k-pink)] sparkle hidden sm:block">
-        <Sparkle className="w-10 h-10" />
-      </div>
-      <div className="fixed top-16 right-12 text-[var(--y2k-yellow)] sparkle hidden sm:block" style={{ animationDelay: "0.5s" }}>
-        <Sparkle className="w-8 h-8" />
-      </div>
-      <div className="fixed bottom-20 left-16 text-[var(--y2k-blue)] sparkle hidden sm:block" style={{ animationDelay: "1s" }}>
-        <Sparkle className="w-10 h-10" />
-      </div>
-      <div className="fixed bottom-32 right-8 text-[var(--y2k-lavender)] sparkle hidden sm:block" style={{ animationDelay: "1.5s" }}>
-        <Sparkle className="w-12 h-12" />
-      </div>
+      {showCelebration && <SessionDoneOverlay />}
+      
+
 
       <div className="w-full max-w-6xl space-y-12">
         {/* Header */}
@@ -407,7 +509,7 @@ export default function PomodoroTimer() {
 
         {/* Changed to items-stretch and lg:flex-row to allow 50/50 split on desktop */}
         <div className={`flex flex-col lg:flex-row items-stretch justify-center w-full transition-all duration-700 ${isFocusing ? "gap-0" : "gap-8"}`}>
-          
+
           {/* Left Column - Main Timer Window */}
           <div className={`flex flex-col transition-all duration-700 ease-in-out ${isFocusing ? "w-full max-w-2xl mx-auto" : "w-full lg:w-1/2"}`}>
             <RetroWindow
@@ -420,9 +522,8 @@ export default function PomodoroTimer() {
                 {/* Status Indicator */}
                 <div className="flex items-center justify-center gap-3">
                   <div
-                    className={`w-5 h-5 rounded-full border-2 border-black shadow-[2px_2px_0px_rgba(0,0,0,1)] ${
-                      isRunning ? "bg-[#90ee90] progress-animate" : "bg-gray-300"
-                    }`}
+                    className={`w-5 h-5 rounded-full border-2 border-black shadow-[2px_2px_0px_rgba(0,0,0,1)] ${isRunning ? "bg-[#90ee90] progress-animate" : "bg-gray-300"
+                      }`}
                   />
                   <span className="text-xl sm:text-2xl tracking-widest font-bold uppercase">{statusLabel}</span>
                 </div>
@@ -437,9 +538,8 @@ export default function PomodoroTimer() {
                 {/* Progress Bar - Made thicker and rounded */}
                 <div className="w-full h-8 bg-white border-4 border-black y2k-shadow-sm overflow-hidden rounded-full">
                   <div
-                    className={`h-full transition-all duration-1000 ease-linear ${
-                      mode === "focus" ? "bg-[var(--y2k-pink)]" : "bg-[var(--y2k-lavender)]"
-                    } ${isRunning ? "progress-animate" : ""}`}
+                    className={`h-full transition-all duration-1000 ease-linear ${mode === "focus" ? "bg-[var(--y2k-pink)]" : "bg-[var(--y2k-lavender)]"
+                      } ${isRunning ? "progress-animate" : ""}`}
                     style={{ width: `${progress}%` }}
                   />
                 </div>
@@ -449,11 +549,10 @@ export default function PomodoroTimer() {
                   <button
                     onClick={handleStartPause}
                     onMouseEnter={playHoverSound}
-                    className={`px-8 py-4 text-xl sm:text-2xl font-bold tracking-wider border-4 border-black rounded-xl y2k-shadow hover:-translate-y-1 hover:shadow-[6px_6px_0px_rgba(0,0,0,1)] transition-all ${
-                      isRunning
+                    className={`px-8 py-4 text-xl sm:text-2xl font-bold tracking-wider border-4 border-black rounded-xl y2k-shadow hover:-translate-y-1 hover:shadow-[6px_6px_0px_rgba(0,0,0,1)] transition-all ${isRunning
                         ? "bg-[var(--y2k-pink)]"
                         : "bg-[#90ee90]"
-                    }`}
+                      }`}
                   >
                     {isRunning ? "PAUSE" : timeLeft === totalDuration ? "START" : "RESUME"}
                   </button>
@@ -480,7 +579,7 @@ export default function PomodoroTimer() {
 
           {/* Right Column - Settings Panel & Session History */}
           <div className={`flex flex-col transition-all duration-700 ease-in-out overflow-hidden origin-right ${isFocusing ? "w-0 opacity-0 scale-95 h-0 m-0 p-0 border-0" : "w-full lg:w-1/2 opacity-100 scale-100 space-y-8"}`}>
-            
+
             {/* Settings Panel */}
             <RetroWindow title="SETTINGS" color="pink" contentClassName="p-6">
               {!showSettings ? (
@@ -501,20 +600,20 @@ export default function PomodoroTimer() {
                 <div className="space-y-6 text-xl font-bold">
                   <div className="flex flex-col gap-2">
                     <label>Focus Duration (min)</label>
-                    <input 
-                      type="number" 
-                      className="border-4 border-black p-3 rounded-xl y2k-shadow-sm font-sans" 
+                    <input
+                      type="number"
+                      className="border-4 border-black p-3 rounded-xl y2k-shadow-sm font-sans"
                       defaultValue={focusDuration / 60}
-                      onChange={(e) => setFocusDuration(e.target.value * 60)} 
+                      onChange={(e) => setFocusDuration(e.target.value * 60)}
                     />
                   </div>
                   <div className="flex flex-col gap-2">
                     <label>Break Duration (min)</label>
-                    <input 
-                      type="number" 
-                      className="border-4 border-black p-3 rounded-xl y2k-shadow-sm font-sans" 
+                    <input
+                      type="number"
+                      className="border-4 border-black p-3 rounded-xl y2k-shadow-sm font-sans"
                       defaultValue={breakDuration / 60}
-                      onChange={(e) => setBreakDuration(e.target.value * 60)} 
+                      onChange={(e) => setBreakDuration(e.target.value * 60)}
                     />
                   </div>
                   <button
@@ -548,7 +647,7 @@ export default function PomodoroTimer() {
                     const mins = Math.floor(session.duration / 60);
                     const secs = session.duration % 60;
                     const durationStr = `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
-                    
+
                     return (
                       <div key={index} className="flex justify-between items-center border-b-4 border-black pb-3 text-lg sm:text-xl font-bold">
                         <span>[{durationStr} focus — {formatCompletionTime(session.completedAt)}]</span>
@@ -557,11 +656,11 @@ export default function PomodoroTimer() {
                     );
                   })
                 )}
-            
+
               </div>
             </RetroWindow>
           </div>
-          
+
         </div>
       </div>
     </main>
