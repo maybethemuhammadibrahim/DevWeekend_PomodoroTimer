@@ -494,7 +494,7 @@ export default function PomodoroTimer() {
   return (
     <main className="min-h-screen graph-paper flex flex-col items-center justify-center p-4 sm:p-12">
       {showCelebration && <SessionDoneOverlay />}
-      
+
 
 
       <div className="w-full max-w-6xl space-y-12">
@@ -530,7 +530,7 @@ export default function PomodoroTimer() {
 
                 {/* Timer Display - Scaled up significantly */}
                 <div className="py-6">
-                  <div className="text-8xl sm:text-[9rem] tracking-wider font-extrabold timer-digit drop-shadow-[4px_4px_0px_rgba(0,0,0,0.15)]">
+                  <div className="text-8xl sm:text-[10rem] tracking-wider font-extrabold timer-digit drop-shadow-[4px_4px_0px_rgba(0,0,0,0.15)]">
                     {formatTime(timeLeft)}
                   </div>
                 </div>
@@ -550,8 +550,8 @@ export default function PomodoroTimer() {
                     onClick={handleStartPause}
                     onMouseEnter={playHoverSound}
                     className={`px-8 py-4 text-xl sm:text-2xl font-bold tracking-wider border-4 border-black rounded-xl y2k-shadow hover:-translate-y-1 hover:shadow-[6px_6px_0px_rgba(0,0,0,1)] transition-all ${isRunning
-                        ? "bg-[var(--y2k-pink)]"
-                        : "bg-[#90ee90]"
+                      ? "bg-[var(--y2k-pink)]"
+                      : "bg-[#90ee90]"
                       }`}
                   >
                     {isRunning ? "PAUSE" : timeLeft === totalDuration ? "START" : "RESUME"}
