@@ -1,122 +1,448 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useState, useEffect, useCallback, useRef } from "react";
 
-function App() {
-  const [count, setCount] = useState(0)
+const STORAGE_KEY = "pomodoro-history";
 
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+function getTodayKey() {
+  return new Date().toDateString();
 }
 
-export default App
+function loadTodaySessions() {
+  if (typeof window === "undefined") return [];
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (!stored) return [];
+    const data = JSON.parse(stored);
+    if (data.date === getTodayKey()) {
+      return data.sessions || [];
+    }
+    return [];
+  } catch {
+    return [];
+  }
+}
+
+function saveSessions(sessions) {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify({ date: getTodayKey(), sessions })
+  );
+}
+
+function formatTime(seconds) {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+}
+
+function formatCompletionTime(isoString) {
+  const date = new Date(isoString);
+  return date.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+}
+
+// Y2K Decorative Components
+function Sparkle({ className = "" }) {
+  return (
+    <svg
+      className={`w-4 h-4 ${className}`}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+    >
+      <path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z" />
+    </svg>
+  );
+}
+
+function WindowControls() {
+  return (
+    <div className="flex gap-1.5">
+      <div className="w-3 h-3 rounded-full bg-[#ff6b6b] border border-black" />
+      <div className="w-3 h-3 rounded-full bg-[var(--y2k-yellow)] border border-black" />
+      <div className="w-3 h-3 rounded-full bg-[#90ee90] border border-black" />
+    </div>
+  );
+}
+
+function RetroWindow({
+  title,
+  children,
+  color = "white",
+  className = "",
+}) {
+  const bgColors = {
+    white: "bg-white",
+    pink: "bg-[var(--y2k-pink)]",
+    blue: "bg-[var(--y2k-blue)]",
+    yellow: "bg-[var(--y2k-yellow)]",
+    lavender: "bg-[var(--y2k-lavender)]",
+  };
+
+  return (
+    <div className={`y2k-window ${bgColors[color] || bgColors.white} ${className}`}>
+      <div className="flex items-center justify-between px-3 py-2 border-b-2 border-black bg-[var(--y2k-cream)]">
+        <WindowControls />
+        <span className="text-sm tracking-wider uppercase">{title}</span>
+        <div className="w-12" />
+      </div>
+      <div className="p-4">{children}</div>
+    </div>
+  );
+}
+
+// Audio hook using Web Audio API
+function useAudio() {
+  const audioContextRef = useRef(null);
+
+  const playSound = useCallback(() => {
+    try {
+      if (!audioContextRef.current) {
+        audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      const ctx = audioContextRef.current;
+
+      // Create a pleasant chime sound
+      const playNote = (frequency, startTime, duration) => {
+        const oscillator = ctx.createOscillator();
+        const gainNode = ctx.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(ctx.destination);
+
+        oscillator.frequency.value = frequency;
+        oscillator.type = 'sine';
+
+        gainNode.gain.setValueAtTime(0, startTime);
+        gainNode.gain.linearRampToValueAtTime(0.3, startTime + 0.05);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+
+        oscillator.start(startTime);
+        oscillator.stop(startTime + duration);
+      };
+
+      const now = ctx.currentTime;
+      // Play a pleasant three-note chime
+      playNote(523.25, now, 0.3); // C5
+      playNote(659.25, now + 0.15, 0.3); // E5
+      playNote(783.99, now + 0.3, 0.5); // G5
+    } catch (e) {
+      console.log("Audio playback failed:", e);
+    }
+  }, []);
+
+  return { playSound };
+}
+
+export default function PomodoroTimer() {
+  // Timer settings (in seconds)
+  const [focusDuration, setFocusDuration] = useState(25 * 60);
+  const [breakDuration, setBreakDuration] = useState(5 * 60);
+
+  // Timer state
+  const [timeLeft, setTimeLeft] = useState(focusDuration);
+  const [isRunning, setIsRunning] = useState(false);
+  const [mode, setMode] = useState("focus");
+  const [sessions, setSessions] = useState([]);
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+
+  // Temp settings for the config panel
+  const [tempFocusMin, setTempFocusMin] = useState(25);
+  const [tempBreakMin, setTempBreakMin] = useState(5);
+
+  const { playSound } = useAudio();
+
+  // Load sessions from localStorage on mount
+  useEffect(() => {
+    setSessions(loadTodaySessions());
+  }, []);
+
+  // Timer countdown logic
+  useEffect(() => {
+    if (!isRunning) return;
+
+    const interval = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          // Timer completed
+          playSound();
+          setShowCelebration(true);
+          setTimeout(() => setShowCelebration(false), 500);
+
+          if (mode === "focus") {
+            // Save completed focus session
+            const newSession = {
+              duration: focusDuration,
+              completedAt: new Date().toISOString(),
+              type: "focus",
+            };
+            const updatedSessions = [...sessions, newSession];
+            setSessions(updatedSessions);
+            saveSessions(updatedSessions);
+
+            // Switch to break
+            setMode("break");
+            return breakDuration;
+          } else {
+            // Switch back to focus
+            setMode("focus");
+            return focusDuration;
+          }
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [isRunning, mode, focusDuration, breakDuration, sessions, playSound]);
+
+  // Update timeLeft when settings change (only when timer is stopped)
+  useEffect(() => {
+    if (!isRunning) {
+      setTimeLeft(mode === "focus" ? focusDuration : breakDuration);
+    }
+  }, [focusDuration, breakDuration, mode, isRunning]);
+
+  const handleStartPause = () => {
+    setIsRunning((prev) => !prev);
+  };
+
+  const handleReset = () => {
+    setIsRunning(false);
+    setTimeLeft(mode === "focus" ? focusDuration : breakDuration);
+  };
+
+  const handleSkip = () => {
+    setIsRunning(false);
+    if (mode === "focus") {
+      setMode("break");
+      setTimeLeft(breakDuration);
+    } else {
+      setMode("focus");
+      setTimeLeft(focusDuration);
+    }
+  };
+
+  const applySettings = () => {
+    const newFocus = Math.max(1, Math.min(120, tempFocusMin)) * 60;
+    const newBreak = Math.max(1, Math.min(60, tempBreakMin)) * 60;
+    setFocusDuration(newFocus);
+    setBreakDuration(newBreak);
+    setShowSettings(false);
+    if (!isRunning) {
+      setTimeLeft(mode === "focus" ? newFocus : newBreak);
+    }
+  };
+
+  const totalDuration = mode === "focus" ? focusDuration : breakDuration;
+  const progress = ((totalDuration - timeLeft) / totalDuration) * 100;
+
+  const windowColor = mode === "focus" ? "yellow" : "blue";
+  const modeLabel = mode === "focus" ? "FOCUS TIME" : "BREAK TIME";
+  const statusLabel = !isRunning && timeLeft === totalDuration
+    ? "READY"
+    : !isRunning
+      ? "PAUSED"
+      : mode === "focus"
+        ? "FOCUSING..."
+        : "RESTING...";
+
+  return (
+    <main className="min-h-screen graph-paper flex flex-col items-center justify-center p-4 sm:p-8">
+      {/* Decorative Sparkles */}
+      <div className="fixed top-8 left-8 text-[var(--y2k-pink)] sparkle hidden sm:block">
+        <Sparkle className="w-6 h-6" />
+      </div>
+      <div className="fixed top-16 right-12 text-[var(--y2k-yellow)] sparkle hidden sm:block" style={{ animationDelay: "0.5s" }}>
+        <Sparkle className="w-5 h-5" />
+      </div>
+      <div className="fixed bottom-20 left-16 text-[var(--y2k-blue)] sparkle hidden sm:block" style={{ animationDelay: "1s" }}>
+        <Sparkle className="w-4 h-4" />
+      </div>
+      <div className="fixed bottom-32 right-8 text-[var(--y2k-lavender)] sparkle hidden sm:block" style={{ animationDelay: "1.5s" }}>
+        <Sparkle className="w-6 h-6" />
+      </div>
+
+      <div className="w-full max-w-4xl space-y-8">
+        {/* Header */}
+        <div className="text-center">
+          <h1 className="text-4xl sm:text-5xl tracking-wider flex items-center justify-center gap-3">
+            <Sparkle className="w-6 h-6 text-[var(--y2k-pink)]" />
+            POMODORO
+            <Sparkle className="w-6 h-6 text-[var(--y2k-blue)]" />
+          </h1>
+          {/* <p className="text-lg tracking-wide mt-1 text-gray-600">stay focused, stay cute!</p> */}
+        </div>
+
+        <div className="flex flex-col md:flex-row gap-6 items-start justify-center w-full">
+          {/* Left Column - Main Timer Window */}
+          <div className="w-full md:w-1/2 max-w-md mx-auto md:mx-0">
+            {/* Main Timer Window */}
+            <RetroWindow
+          title={modeLabel}
+          color={windowColor}
+          className={`${showCelebration ? "celebrate" : ""}`}
+        >
+          <div className="text-center space-y-4">
+            {/* Status Indicator */}
+            <div className="flex items-center justify-center gap-2">
+              <div
+                className={`w-3 h-3 rounded-full border border-black ${
+                  isRunning ? "bg-[#90ee90] progress-animate" : "bg-gray-300"
+                }`}
+              />
+              <span className="text-sm tracking-widest">{statusLabel}</span>
+            </div>
+
+            {/* Timer Display */}
+            <div className="py-4">
+              <div className="text-7xl sm:text-8xl tracking-wider font-bold timer-digit">
+                {formatTime(timeLeft)}
+              </div>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="w-full h-6 bg-white border-2 border-black y2k-shadow-sm overflow-hidden">
+              <div
+                className={`h-full transition-all duration-1000 ease-linear ${
+                  mode === "focus" ? "bg-[var(--y2k-pink)]" : "bg-[var(--y2k-lavender)]"
+                } ${isRunning ? "progress-animate" : ""}`}
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+
+            {/* Control Buttons */}
+            <div className="flex flex-wrap justify-center gap-3 pt-2">
+              <button
+                onClick={handleStartPause}
+                className={`px-6 py-2 text-lg tracking-wider border-2 border-black y2k-shadow y2k-button transition-all ${
+                  isRunning
+                    ? "bg-[var(--y2k-pink)]"
+                    : "bg-[#90ee90]"
+                }`}
+              >
+                {isRunning ? "PAUSE" : timeLeft === totalDuration ? "START" : "RESUME"}
+              </button>
+
+              <button
+                onClick={handleReset}
+                className="px-6 py-2 text-lg tracking-wider border-2 border-black bg-white y2k-shadow y2k-button transition-all"
+              >
+                RESET
+              </button>
+
+              <button
+                onClick={handleSkip}
+                className="px-6 py-2 text-lg tracking-wider border-2 border-black bg-[var(--y2k-lavender)] y2k-shadow y2k-button transition-all"
+              >
+                SKIP
+              </button>
+            </div>
+          </div>
+        </RetroWindow>
+        </div>
+
+        {/* Right Column - Settings Panel & Session History */}
+        <div className="w-full md:w-1/2 max-w-md mx-auto md:mx-0 space-y-6">
+          {/* Settings Panel */}
+          <RetroWindow title="SETTINGS" color="pink">
+          {!showSettings ? (
+            <div className="flex items-center justify-between">
+              <div className="text-sm space-y-1">
+                <p>Focus: {focusDuration / 60} min</p>
+                <p>Break: {breakDuration / 60} min</p>
+              </div>
+              <button
+                onClick={() => {
+                  setTempFocusMin(focusDuration / 60);
+                  setTempBreakMin(breakDuration / 60);
+                  setShowSettings(true);
+                }}
+                className="px-4 py-2 text-sm tracking-wider border-2 border-black bg-white y2k-shadow-sm y2k-button transition-all"
+              >
+                CONFIGURE
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                <label className="text-sm w-20">FOCUS:</label>
+                <input
+                  type="number"
+                  min="1"
+                  max="120"
+                  value={tempFocusMin}
+                  onChange={(e) => setTempFocusMin(Number(e.target.value))}
+                  className="w-20 px-2 py-1 text-center border-2 border-black bg-white y2k-shadow-sm"
+                />
+                <span className="text-sm">min</span>
+              </div>
+              <div className="flex items-center gap-4">
+                <label className="text-sm w-20">BREAK:</label>
+                <input
+                  type="number"
+                  min="1"
+                  max="60"
+                  value={tempBreakMin}
+                  onChange={(e) => setTempBreakMin(Number(e.target.value))}
+                  className="w-20 px-2 py-1 text-center border-2 border-black bg-white y2k-shadow-sm"
+                />
+                <span className="text-sm">min</span>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={applySettings}
+                  className="px-4 py-2 text-sm tracking-wider border-2 border-black bg-[#90ee90] y2k-shadow-sm y2k-button transition-all"
+                >
+                  APPLY
+                </button>
+                <button
+                  onClick={() => setShowSettings(false)}
+                  className="px-4 py-2 text-sm tracking-wider border-2 border-black bg-white y2k-shadow-sm y2k-button transition-all"
+                >
+                  CANCEL
+                </button>
+              </div>
+            </div>
+          )}
+        </RetroWindow>
+
+        {/* Session History */}
+        <RetroWindow title="TODAY'S SESSIONS" color="lavender">
+          {sessions.length === 0 ? (
+            <div className="text-center py-4 text-gray-500">
+              <p className="text-sm">No sessions completed yet!</p>
+              <p className="text-xs mt-1">Start focusing to see your progress</p>
+            </div>
+          ) : (
+            <div className="space-y-2 max-h-40 overflow-y-auto">
+              {sessions.map((session, index) => (
+                <div
+                  key={index}
+                  className="flex items-center gap-2 px-3 py-2 bg-white border-2 border-black y2k-shadow-sm"
+                >
+                  <span className="text-[#90ee90]">✓</span>
+                  <span className="flex-1 text-sm">
+                    {formatTime(session.duration)} focus
+                  </span>
+                  <span className="text-xs text-gray-500">
+                    {formatCompletionTime(session.completedAt)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="mt-3 pt-3 border-t-2 border-black/20 text-center text-xs text-gray-500">
+            {sessions.length} session{sessions.length !== 1 ? "s" : ""} completed today
+          </div>
+        </RetroWindow>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  );
+}

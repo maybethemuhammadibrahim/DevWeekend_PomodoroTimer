@@ -1,7 +1,11 @@
 import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
+// You will also have your framework plugin here:
+import react from '@vitejs/plugin-react' // OR import vue from '@vitejs/plugin-vue'
 
-// https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    tailwindcss(),
+    react(), // OR vue()
+  ],
 })

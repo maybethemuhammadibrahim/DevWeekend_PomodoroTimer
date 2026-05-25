@@ -1,111 +1,187 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+  /* Y2K Kawaii Retro Web Color Palette */
+  --background: #f5f5f0;
+  --foreground: #000000;
+  --card: #ffffff;
+  --card-foreground: #000000;
+  --popover: #ffffff;
+  --popover-foreground: #000000;
+  --primary: #000000;
+  --primary-foreground: #ffffff;
+  --secondary: #f0f0e8;
+  --secondary-foreground: #000000;
+  --muted: #e8e8e0;
+  --muted-foreground: #555555;
+  --accent: #ffd1dc;
+  --accent-foreground: #000000;
+  --destructive: #ff6b6b;
+  --destructive-foreground: #000000;
+  --border: #000000;
+  --input: #000000;
+  --ring: #000000;
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+  /* Y2K Custom Colors */
+  --y2k-pink: #ffd1dc;
+  --y2k-blue: #b4d8e7;
+  --y2k-yellow: #fff3b0;
+  --y2k-lavender: #e8d5f0;
+  --y2k-cream: #faf8f5;
+  --y2k-grid: #e0e0d8;
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
+  --radius: 0px;
+
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
 
-  @media (max-width: 1024px) {
-    font-size: 16px;
+@theme inline {
+  --font-sans: 'VT323', monospace;
+  --font-mono: 'VT323', monospace;
+  /* --font-sans: 'Zen Dots', sans-serif; */
+  /* --font-mono: 'Zen Dots', sans-serif; */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
+
+  /* Y2K Custom Colors */
+  --color-y2k-pink: var(--y2k-pink);
+  --color-y2k-blue: var(--y2k-blue);
+  --color-y2k-yellow: var(--y2k-yellow);
+  --color-y2k-lavender: var(--y2k-lavender);
+  --color-y2k-cream: var(--y2k-cream);
+  --color-y2k-grid: var(--y2k-grid);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    margin: 0;
   }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
-
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
+/* Graph Paper Background */
+.graph-paper {
+  background-color: var(--y2k-cream);
+  background-image:
+    linear-gradient(var(--y2k-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--y2k-grid) 1px, transparent 1px);
+  background-size: 20px 20px;
 }
 
-body {
-  margin: 0;
+/* Y2K Hard Drop Shadow */
+.y2k-shadow {
+  box-shadow: 4px 4px 0px 0px rgba(0,0,0,1);
 }
 
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
+.y2k-shadow-sm {
+  box-shadow: 2px 2px 0px 0px rgba(0,0,0,1);
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
+.y2k-shadow-lg {
+  box-shadow: 6px 6px 0px 0px rgba(0,0,0,1);
 }
 
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
-  margin: 0;
+/* Y2K Window Styles */
+.y2k-window {
+  border: 2px solid #000000;
+  box-shadow: 4px 4px 0px 0px rgba(0,0,0,1);
 }
 
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
+/* Retro Button Hover */
+.y2k-button:hover {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0px 0px rgba(0,0,0,1);
 }
 
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+.y2k-button:active {
+  transform: translate(4px, 4px);
+  box-shadow: 0px 0px 0px 0px rgba(0,0,0,1);
+}
+
+/* Progress Bar Animation */
+@keyframes pulse-glow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.progress-animate {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Timer Number Transition */
+.timer-digit {
+  transition: transform 0.1s ease-out;
+}
+
+.timer-digit-change {
+  animation: digit-tick 0.15s ease-out;
+}
+
+@keyframes digit-tick {
+  0% { transform: translateY(-2px); }
+  50% { transform: translateY(1px); }
+  100% { transform: translateY(0); }
+}
+
+/* Sparkle Animation */
+@keyframes sparkle {
+  0%, 100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  50% { transform: scale(1.2) rotate(180deg); opacity: 0.8; }
+}
+
+.sparkle {
+  animation: sparkle 2s ease-in-out infinite;
+}
+
+/* Floating Animation */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+}
+
+.float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Session Complete Celebration */
+@keyframes celebrate {
+  0% { transform: scale(1); }
+  25% { transform: scale(1.05); }
+  50% { transform: scale(1); }
+  75% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+
+.celebrate {
+  animation: celebrate 0.5s ease-out;
 }
