@@ -134,7 +134,36 @@ function useAudio() {
     }
   }, []);
 
-  return { playSound };
+  const playCalmSound = useCallback(() => {
+    try {
+      if (!audioContextRef.current) {
+        audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      const ctx = audioContextRef.current;
+      const playNote = (frequency, startTime, duration) => {
+        const oscillator = ctx.createOscillator();
+        const gainNode = ctx.createGain();
+        oscillator.connect(gainNode);
+        gainNode.connect(ctx.destination);
+        oscillator.frequency.value = frequency;
+        oscillator.type = 'sine';
+        gainNode.gain.setValueAtTime(0, startTime);
+        gainNode.gain.linearRampToValueAtTime(0.2, startTime + 0.5);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+        oscillator.start(startTime);
+        oscillator.stop(startTime + duration);
+      };
+      const now = ctx.currentTime;
+      // Calm, deep ambient chord
+      playNote(261.63, now, 2.5); // C4
+      playNote(329.63, now, 2.5); // E4
+      playNote(392.00, now, 2.5); // G4
+    } catch (e) {
+      console.log("Audio playback failed:", e);
+    }
+  }, []);
+
+  return { playSound, playCalmSound };
 }
 
 export default function PomodoroTimer() {
@@ -154,7 +183,7 @@ export default function PomodoroTimer() {
   const [tempFocusMin, setTempFocusMin] = useState(25);
   const [tempBreakMin, setTempBreakMin] = useState(5);
 
-  const { playSound } = useAudio();
+  const { playSound, playCalmSound } = useAudio();
 
   // Load sessions from localStorage on mount
   useEffect(() => {
@@ -208,6 +237,9 @@ export default function PomodoroTimer() {
   }, [focusDuration, breakDuration, mode, isRunning]);
 
   const handleStartPause = () => {
+    if (!isRunning && mode === "focus") {
+      playCalmSound();
+    }
     setIsRunning((prev) => !prev);
   };
 
@@ -250,6 +282,8 @@ export default function PomodoroTimer() {
       : mode === "focus"
         ? "FOCUSING..."
         : "RESTING...";
+
+  const isFocusing = isRunning && mode === "focus";
 
   return (
     // <main className="min-h-screen graph-paper flex flex-col items-center justify-center p-4 sm:p-8">
@@ -472,10 +506,10 @@ export default function PomodoroTimer() {
         </div> */}
 
         {/* Changed to items-stretch and lg:flex-row to allow 50/50 split on desktop */}
-        <div className="flex flex-col lg:flex-row gap-8 items-stretch justify-center w-full">
+        <div className={`flex flex-col lg:flex-row items-stretch justify-center w-full transition-all duration-700 ${isFocusing ? "gap-0" : "gap-8"}`}>
           
           {/* Left Column - Main Timer Window */}
-          <div className="w-full lg:w-1/2 flex flex-col">
+          <div className={`flex flex-col transition-all duration-700 ease-in-out ${isFocusing ? "w-full max-w-2xl mx-auto" : "w-full lg:w-1/2"}`}>
             <RetroWindow
               title={modeLabel}
               color={windowColor}
@@ -542,7 +576,7 @@ export default function PomodoroTimer() {
           </div>
 
           {/* Right Column - Settings Panel & Session History */}
-          <div className="w-full lg:w-1/2 flex flex-col space-y-8">
+          <div className={`flex flex-col transition-all duration-700 ease-in-out overflow-hidden origin-right ${isFocusing ? "w-0 opacity-0 scale-95 h-0 m-0 p-0 border-0" : "w-full lg:w-1/2 opacity-100 scale-100 space-y-8"}`}>
             
             {/* Settings Panel */}
             <RetroWindow title="SETTINGS" color="pink" contentClassName="p-6">
